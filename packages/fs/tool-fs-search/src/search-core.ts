@@ -236,6 +236,11 @@ export async function runRipgrep(
     : await ctx.workingDirectory.ensure(exec.agent, exec.signal)
   let handle: SubprocessHandle
   try {
+    // The session id lets a subprocess provider route the search to the session's
+    // own execution world. Without it, `glob`/`grep` run where the web server
+    // runs while `bash` may run in a container or on a remote host — one session
+    // then sees two different filesystems at the same paths, and a search can
+    // report "no matches" for a file it never looked at.
     handle = ctx.subprocess.spawn({
       argv: [await resolveRgPath(), '--no-config', ...argv],
       cwd: workdir,
@@ -246,6 +251,7 @@ export async function runRipgrep(
       },
       graceMs,
       signal: exec.signal,
+      sessionId: exec.agent?.session.id,
     } satisfies SubprocessSpawnSpec)
   } catch (error: unknown) {
     // Node's spawn() throws synchronously for a NUL in argv, and the local
