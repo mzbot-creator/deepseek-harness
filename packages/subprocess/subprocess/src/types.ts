@@ -97,6 +97,17 @@ export interface SubprocessSpawnSpec {
    */
   signal?: AbortSignal | undefined
   /**
+   * The session this spawn belongs to, when the caller has one.
+   *
+   * A provider that executes somewhere other than this process (a container, a
+   * remote host) uses it to pick the right execution world. Without it the spawn
+   * lands wherever the provider defaults to, which can be a different filesystem
+   * than the one the same session's other tools see — silently.
+   *
+   * Providers that execute locally ignore it.
+   */
+  sessionId?: string | undefined
+  /**
    * Explicit environment entries merged onto the implementation's scrubbed
    * parent base (see `scrubbedParentEnv`), with no namespace validation. A
    * string is a deliberate caller opt-in, so a forwarded credential-shaped
