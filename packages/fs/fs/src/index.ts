@@ -1,4 +1,22 @@
 /**
+ * Options for path resolution and directory listing.
+ *
+ * `sessionId` identifies the calling session. A provider that serves more than
+ * one execution world (a container per session, a remote host, a cloud drive)
+ * needs it to know which world a path belongs to: `cwd` is a host path, so a
+ * prefix match can only guess, and two sessions may share a working directory.
+ * Providers that do not need it simply ignore the field.
+ */
+export interface FsResolveOptions {
+  /** Working directory used to resolve relative paths, when the caller has one. */
+  cwd?: string
+  /** Cancellation for the resolution. */
+  signal?: AbortSignal
+  /** The calling session, when the call came from one. */
+  sessionId?: string
+}
+
+/**
  * Filesystem Service Definition for one execution world. Backends own stable target
  * identity, process paths and file URIs, containment, text reads, decoding,
  * binary rejection, and atomic mutations. Read windows and
@@ -129,7 +147,7 @@ export abstract class FileSystem extends Service {
    * @param opts - optional cwd override and cancellation signal.
    * @returns the stable target; the same file yields the same `targetKey`.
    */
-  abstract resolve(path: string, opts?: { cwd?: string; signal?: AbortSignal }): Promise<FsTarget>
+  abstract resolve(path: string, opts?: FsResolveOptions): Promise<FsTarget>
 
   /**
    * Return the canonical absolute path a subprocess in this filesystem's
@@ -194,7 +212,7 @@ export abstract class FileSystem extends Service {
    * @param signal - aborts the metadata round-trip.
    * @returns metadata only, never content; undefined for an absent path.
    */
-  abstract lstat(path: string, opts?: { cwd?: string }, signal?: AbortSignal): Promise<FsPathInfo | undefined>
+  abstract lstat(path: string, opts?: FsResolveOptions, signal?: AbortSignal): Promise<FsPathInfo | undefined>
 
   /**
    * Read the whole regular text file as a single decoded string.
